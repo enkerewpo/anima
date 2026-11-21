@@ -1,0 +1,10 @@
+build/
+out/
+*.apk
+*.idsig
+*.keystore
+*.jks
+.env
+__pycache__/
+.DS_Store
+episodes/

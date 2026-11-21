@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If you use Anima in research, please cite it as below."
+title: "Anima: an agent-native OS research platform built on AOSP"
+authors:
+  - alias: wheatfox
+repository-code: "https://github.com/enkerewpo/anima"
+license: Apache-2.0
+keywords:
+  - operating systems
+  - AI agents
+  - GUI agents
+  - Android
+  - AOSP
+  - mobile security
