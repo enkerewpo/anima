@@ -6,7 +6,7 @@ Anima moves the AI agent out of the app layer and into the operating system. Ins
 
 We build on the Android Open Source Project because the app ecosystem people actually use still runs on Android, and because AOSP is open enough to change at every layer. The goal is a shared platform where we, and anyone else, can run experiments on what happens when a model becomes part of the OS: to interaction, to system design, and to security.
 
-> **Status: pre-alpha.** Stage 0 runs on the Android Emulator: the system service, agent display, shell UI, input injection, UI-tree capture and silent install work; the model-driven loop is being tested. See [Roadmap](#roadmap).
+> **Status: pre-alpha.** Stage 0 runs on the Android Emulator: the system service, agent display, shell UI, input injection, UI-tree capture and silent install work; a cloud model completes multi-app tasks and builds its own apps. See [Roadmap](#roadmap) and the [findings log](docs/findings.md).
 
 ## Why
 
@@ -63,6 +63,7 @@ vendor/anima/          on-device code, laid out as it will sit in an AOSP/Lineag
   Anima/               the Anima system service, agent display, policy, API server and shell UI
 host/                  reference agent and app generator that run on a computer
 scripts/               build and run helpers
+docs/findings.md       dated notes on what we learn
 UPSTREAM.md            upstream components, pinned versions, our forks and the rules for them
 ```
 
@@ -110,7 +111,8 @@ Stage 0 needs no AOSP build, so anyone with a laptop can try it. Stages 1 and 2 
   - [x] Shell UI: live agent display you can touch to take over, activity log, task input, Stop
   - [x] Silent install of a generated app as an ordinary package
   - [x] Confirmation policy below the API (keyword and agent-flagged steps)
-  - [ ] Host-side agent loop with a cloud model completing a multi-app task
+  - [x] Reference agent with a cloud model completing multi-app tasks (Anthropic or OpenAI-style APIs)
+  - [x] Agent display isolated from the owner's keyboard
   - [ ] Episode recording
   - [ ] Agent-centred home: the shell as the HOME app and the assistant (voice) entry, apps one level down
 - [ ] **Stage 1: AOSP / Cuttlefish**

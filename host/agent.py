@@ -6,9 +6,10 @@ Anima API, ask a model for one action, act, repeat. The model never touches the 
 directly; every action goes through the API and its policy layer.
 
 Environment:
-  ANIMA_API_KEY    key for an Anthropic-compatible Messages API (required)
+  ANIMA_API_KEY    model API key (required); put these in the repo's git-ignored .env
+  ANIMA_API_STYLE  anthropic (default) or openai (Chat Completions, e.g. DeepSeek)
   ANIMA_BASE_URL   default https://api.anthropic.com
-  ANIMA_MODEL      default claude-sonnet-5-5
+  ANIMA_MODEL      default claude-sonnet-5-5, or deepseek-flash with the openai style
   ANIMA_URL        Anima API, default http://127.0.0.1:7878 (adb forward tcp:7878 tcp:7878)
 """
 import base64
@@ -37,7 +38,8 @@ _load_env()
 
 ANIMA = os.environ.get("ANIMA_URL", "http://127.0.0.1:7878")
 BASE = os.environ.get("ANIMA_BASE_URL", "https://api.anthropic.com").rstrip("/")
-MODEL = os.environ.get("ANIMA_MODEL", "claude-sonnet-5-5")
+STYLE = os.environ.get("ANIMA_API_STYLE", "anthropic")
+MODEL = os.environ.get("ANIMA_MODEL", "deepseek-flash" if STYLE == "openai" else "claude-sonnet-5-5")
 KEY = os.environ.get("ANIMA_API_KEY", "")
 MAX_STEPS = 30
 
@@ -87,14 +89,26 @@ def log(kind, text):
     print(f"[{kind}] {text}", flush=True)
 
 
-def model(messages, max_tokens=800):
-    req = urllib.request.Request(
-        BASE + "/v1/messages",
-        data=json.dumps({"model": MODEL, "max_tokens": max_tokens, "system": SYSTEM, "messages": messages}).encode(),
-        headers={"content-type": "application/json", "x-api-key": KEY, "anthropic-version": "2023-06-01"},
-    )
-    with urllib.request.urlopen(req, timeout=120) as r:
+def chat(system, content, max_tokens):
+    """One model call. content: text, or a list of {"text": ...} / {"jpeg": base64} parts.
+    ANIMA_API_STYLE=anthropic (Messages API) or openai (Chat Completions, e.g. DeepSeek)."""
+    parts = [{"text": content}] if isinstance(content, str) else content
+    if STYLE == "openai":
+        msg = [{"type": "image_url", "image_url": {"url": "data:image/jpeg;base64," + p["jpeg"]}} if "jpeg" in p
+               else {"type": "text", "text": p["text"]} for p in parts]
+        url, headers = BASE + "/chat/completions", {"authorization": "Bearer " + KEY}
+        body = {"model": MODEL, "max_tokens": max_tokens,
+                "messages": [{"role": "system", "content": system}, {"role": "user", "content": msg}]}
+    else:
+        msg = [{"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": p["jpeg"]}} if "jpeg" in p
+               else {"type": "text", "text": p["text"]} for p in parts]
+        url, headers = BASE + "/v1/messages", {"x-api-key": KEY, "anthropic-version": "2023-06-01"}
+        body = {"model": MODEL, "max_tokens": max_tokens, "system": system, "messages": [{"role": "user", "content": msg}]}
+    req = urllib.request.Request(url, data=json.dumps(body).encode(), headers={"content-type": "application/json", **headers})
+    with urllib.request.urlopen(req, timeout=240) as r:
         out = json.loads(r.read())
+    if STYLE == "openai":
+        return out["choices"][0]["message"].get("content") or ""
     return "".join(b.get("text", "") for b in out.get("content", []))
 
 
@@ -127,10 +141,8 @@ def run(task, apps):
             text = (f"Task: {task}\nInstalled apps: {app_list}\n"
                     f"Previous steps:\n" + ("\n".join(history[-8:]) or "(none)") +
                     f"\n\nStep {step}. Foreground app: {obs.get('app') or 'none'}\nElements:\n{compact(obs['elements'])}")
-            content = [{"type": "text", "text": text}]
-            if obs.get("jpeg"):
-                content.insert(0, {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": obs["jpeg"]}})
-            reply = parse(model([{"role": "user", "content": content}]))
+            content = ([{"jpeg": obs["jpeg"]}] if obs.get("jpeg") else []) + [{"text": text}]
+            reply = parse(chat(SYSTEM, content, 4000))
             action = reply.get("action", {})
             log("think", reply.get("thought", ""))
             kind = action.get("type")
@@ -152,17 +164,9 @@ def run(task, apps):
         api("/state", {"state": "idle"})
 
 
-def model_raw(system, prompt, max_tokens=4000):
+def model_raw(system, prompt, max_tokens=8000):
     """A plain text call with its own system prompt, used for writing code."""
-    req = urllib.request.Request(
-        BASE + "/v1/messages",
-        data=json.dumps({"model": MODEL, "max_tokens": max_tokens, "system": system,
-                         "messages": [{"role": "user", "content": prompt}]}).encode(),
-        headers={"content-type": "application/json", "x-api-key": KEY, "anthropic-version": "2023-06-01"},
-    )
-    with urllib.request.urlopen(req, timeout=240) as r:
-        out = json.loads(r.read())
-    return "".join(b.get("text", "") for b in out.get("content", []))
+    return chat(system, prompt, max_tokens)
 
 
 def main():

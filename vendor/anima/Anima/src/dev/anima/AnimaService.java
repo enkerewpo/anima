@@ -174,6 +174,22 @@ public class AnimaService extends Service {
                 | FLAG_TRUSTED | FLAG_ALWAYS_UNLOCKED | FLAG_OWN_FOCUS;
         DisplayManager dm = getSystemService(DisplayManager.class);
         display = dm.createVirtualDisplay("anima-agent", W, H, DPI, reader.getSurface(), flags);
+        hideImeOnAgentDisplay();
+    }
+
+    /**
+     * Without this, a text field focused on the agent display raises the soft keyboard on the
+     * person's own screen. The agent types through the system instead, so the agent display
+     * gets no input method at all (WindowManager DISPLAY_IME_POLICY_HIDE).
+     */
+    private void hideImeOnAgentDisplay() {
+        try {
+            Object wm = Class.forName("android.view.WindowManagerGlobal").getMethod("getWindowManagerService").invoke(null);
+            wm.getClass().getMethod("setDisplayImePolicy", int.class, int.class).invoke(wm, displayId(), 2);
+        } catch (Exception e) {
+            Log.w(TAG, "ime policy", e);
+            log("error", "Could not keep the keyboard off the agent display: " + e.getCause());
+        }
     }
 
     int displayId() { return display == null ? -1 : display.getDisplay().getDisplayId(); }
@@ -232,7 +248,7 @@ public class AnimaService extends Service {
                 int[] p = point(a);
                 if (p == null) return "error: no such element";
                 tap(p[0], p[1]);
-                log("act", "Tap " + describe(a) + " at (" + p[0] + ", " + p[1] + ")");
+                log("act", ("Tap " + describe(a)).trim() + " at (" + p[0] + ", " + p[1] + ")");
                 return "ok";
             }
             case "long_press": {
