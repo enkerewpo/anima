@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Anima: our code and our forks on top of LineageOS lineage-24.0. See UPSTREAM.md. -->
+<manifest>
+  <remote name="anima" fetch="https://github.com/enkerewpo/" />
+
+  <remove-project name="LineageOS/android_frameworks_base" />
+  <project path="frameworks/base" name="anima_frameworks_base" remote="anima" revision="anima-lineage-24.0" groups="pdk-cw-fs,pdk-fs,sysui-studio" />
+
+  <remove-project name="LineageOS/android_frameworks_native" />
+  <project path="frameworks/native" name="anima_frameworks_native" remote="anima" revision="anima-lineage-24.0" groups="pdk,sysui-studio" />
+
+  <!-- Virtual machine target (QEMU/KVM) -->
+  <project path="device/virt/virtio_x86_64" name="LineageOS/android_device_virt_virtio_x86_64" remote="github" revision="lineage-24.0" />
+  <project path="device/virt/virtio-common" name="LineageOS/android_device_virt_virtio-common" remote="github" revision="lineage-24.0" />
+  <project path="device/virt/virt-common" name="LineageOS/android_device_virt_virt-common" remote="github" revision="lineage-24.0" />
+
+  <!-- Our own code -->
+  <project path="anima" name="anima" remote="anima" revision="main">
+    <linkfile src="vendor/anima" dest="vendor/anima" />
+  </project>
+</manifest>

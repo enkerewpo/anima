@@ -6,7 +6,7 @@ Anima moves the AI agent out of the app layer and into the operating system. Ins
 
 We build on the Android Open Source Project because the app ecosystem people actually use still runs on Android, and because AOSP is open enough to change at every layer. The goal is a shared platform where we, and anyone else, can run experiments on what happens when a model becomes part of the OS: to interaction, to system design, and to security.
 
-> **Status: pre-alpha.** Stage 0 runs on the Android Emulator: the system service, agent display, shell UI, input injection, UI-tree capture and silent install work; a cloud model completes multi-app tasks and builds its own apps. See [Roadmap](#roadmap) and the [findings log](docs/findings.md).
+> **Status: pre-alpha.** We are building LineageOS `lineage-24.0` from source with our own framework and kernel forks, running it as a VM under QEMU/KVM (Stage 1). A first, retired prototype (Stage 0) ran Anima as a platform-signed app on a stock emulator image and showed the agent display, input injection, policy and app generation working; it modified no OS code. See [Roadmap](#roadmap), [`UPSTREAM.md`](UPSTREAM.md) and the [findings log](docs/findings.md).
 
 ## Why
 
@@ -69,7 +69,7 @@ UPSTREAM.md            upstream components, pinned versions, our forks and the r
 
 From Stage 1, the OS changes that cannot live in `vendor/anima` go into separate fork repositories of the upstream projects (for example `frameworks/base`), each a clean stack of `[anima]` commits on a pinned upstream revision.
 
-## Quick start (Stage 0)
+## Quick start (Stage 0 prototype, retired)
 
 Needs the Android SDK (emulator, platform-tools, build-tools 35, platform 35), JDK 17 and Python 3. No AOSP checkout.
 
@@ -98,15 +98,15 @@ Plain HTTP on the device's localhost (`adb forward tcp:7878 tcp:7878`). See [`Ap
 
 | Stage | Where it runs | Base | Agent lives in |
 |---|---|---|---|
-| 0 | Android Emulator (arm64, macOS or Linux) | stock AOSP image, API 35 | privileged system app in `/system/priv-app` |
-| 1 | Cuttlefish (Linux x86_64) | LineageOS or AOSP built from source, our forks per [`UPSTREAM.md`](UPSTREAM.md) | `system_server` service plus native hooks |
-| 2 | Real phones (Google Pixel 8a first) | LineageOS, our forks per [`UPSTREAM.md`](UPSTREAM.md), signed with our own keys | same as Stage 1, plus on-device models |
+| 0 (retired) | Android Emulator, stock AOSP image, API 35 | unmodified | platform-signed app; a feasibility prototype only |
+| **1 (current)** | VM under QEMU/KVM on a Linux x86_64 host (`lineage_virtio_x86_64`) | LineageOS `lineage-24.0` built from source, our forks per [`UPSTREAM.md`](UPSTREAM.md) | `system_server` service, native hooks, our kernel |
+| 2 | Google Pixel 8a / Pixel 8 | the same tree, signed with our own keys | same as Stage 1, plus on-device models |
 
-Stage 0 needs no AOSP build, so anyone with a laptop can try it. Stages 1 and 2 are where the OS-level changes live.
+The OS changes are the point of the project, so every stage from 1 on runs a system we built. The VM and the phones share one LineageOS branch and the same framework forks.
 
 ## Roadmap
 
-- [ ] **Stage 0: emulator**
+- [x] **Stage 0: feasibility prototype (retired)**
   - [x] Platform-signed Anima service: trusted agent display with its own focus, input injection, frame and UI-tree capture
   - [x] Shell UI: live agent display you can touch to take over, activity log, task input, Stop
   - [x] Silent install of a generated app as an ordinary package
@@ -115,7 +115,9 @@ Stage 0 needs no AOSP build, so anyone with a laptop can try it. Stages 1 and 2 
   - [x] Agent display isolated from the owner's keyboard
   - [ ] Episode recording
   - [ ] Agent-centred home: the shell as the HOME app and the assistant (voice) entry, apps one level down
-- [ ] **Stage 1: AOSP / Cuttlefish**
+- [ ] **Stage 1: LineageOS VM built from source**
+  - [x] Forks of `frameworks/base`, `frameworks/native` and the kernels, pinned in `UPSTREAM.md`
+  - [ ] Source sync and first unmodified build booting under QEMU/KVM
   - [ ] Anima service inside `system_server`
   - [ ] OS-internal observation: window/task state, SurfaceFlinger frame data, scheduler and binder traces
   - [ ] Policy layer enforced in the framework
