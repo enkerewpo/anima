@@ -21,6 +21,20 @@ import urllib.request
 
 import appgen
 
+
+def _load_env():
+    """Reads KEY=VALUE lines from the repo's .env (git-ignored), without overriding the environment."""
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env")
+    if os.path.exists(path):
+        for line in open(path):
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                k, v = line.split("=", 1)
+                os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+
+
+_load_env()
+
 ANIMA = os.environ.get("ANIMA_URL", "http://127.0.0.1:7878")
 BASE = os.environ.get("ANIMA_BASE_URL", "https://api.anthropic.com").rstrip("/")
 MODEL = os.environ.get("ANIMA_MODEL", "claude-sonnet-5-5")
