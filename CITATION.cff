@@ -3,6 +3,7 @@ message: "If you use Anima in research, please cite it as below."
 title: "Anima: an agent-native OS research platform built on AOSP"
 authors:
   - alias: wheatfox
+    email: wheatfox17@icloud.com
 repository-code: "https://github.com/enkerewpo/anima"
 license: Apache-2.0
 keywords:

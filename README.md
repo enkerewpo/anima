@@ -112,6 +112,10 @@ Apache License 2.0, matching AOSP. Kernel changes, when there are any, are relea
 
 Android is a trademark of Google LLC. Anima is an independent research project and is not affiliated with or endorsed by Google.
 
+## Contact
+
+wheatfox · wheatfox17@icloud.com. Questions and ideas are welcome in GitHub Issues and Discussions.
+
 ## Citation
 
 If you use Anima in research, please cite it with the metadata in [`CITATION.cff`](CITATION.cff).
