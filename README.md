@@ -6,7 +6,7 @@ Anima moves the AI agent out of the app layer and into the operating system. Ins
 
 We build on the Android Open Source Project because the app ecosystem people actually use still runs on Android, and because AOSP is open enough to change at every layer. The goal is a shared platform where we, and anyone else, can run experiments on what happens when a model becomes part of the OS: to interaction, to system design, and to security.
 
-> **Status: pre-alpha.** Stage 0, emulator only. Nothing here is usable yet. See [Roadmap](#roadmap).
+> **Status: pre-alpha.** Stage 0 runs on the Android Emulator: the system service, agent display, shell UI, input injection, UI-tree capture and silent install work; the model-driven loop is being tested. See [Roadmap](#roadmap).
 
 ## Why
 
@@ -54,6 +54,31 @@ The design is layered so that each piece can be replaced in an experiment.
 - **Policy & audit** sits below the API. Every action is logged; sensitive and irreversible actions need user confirmation; apps can be excluded.
 - **Episodes** (observations, actions, system traces) are recorded for replay and evaluation.
 
+## Quick start (Stage 0)
+
+Needs the Android SDK (emulator, platform-tools, build-tools 35, platform 35), JDK 17 and Python 3. No AOSP checkout.
+
+```sh
+scripts/stage0.sh                       # boots a stock AOSP emulator, builds and installs Anima, opens the shell
+export ANIMA_API_KEY=...                 # Anthropic-compatible Messages API
+python3 host/agent.py                    # then type a task on the phone and tap Run
+```
+
+How Stage 0 gets system privileges without building AOSP: stock emulator images are signed with the public AOSP platform test key, so an app signed with that key is a platform app there and holds `INJECT_EVENTS`, `ADD_TRUSTED_DISPLAY`, `INSTALL_PACKAGES` and `WRITE_SECURE_SETTINGS`. This only works on test-key builds and is never a way into a real phone.
+
+### The Anima API
+
+Plain HTTP on the device's localhost (`adb forward tcp:7878 tcp:7878`). See [`ApiServer.java`](device/src/dev/anima/ApiServer.java).
+
+| Call | What it does |
+|---|---|
+| `GET /observe` | Elements on the agent display (index, role, text, bounds, flags), foreground app, JPEG frame |
+| `GET /apps` | Launchable apps |
+| `POST /act` | `tap`, `long_press`, `type`, `swipe`, `back`, `enter`, `launch`, `wait`; passes the policy first |
+| `GET /task` | Next task typed on the phone |
+| `POST /log`, `POST /state` | Show the agent's reasoning and state in the shell |
+| `POST /install` | Install raw APK bytes as an ordinary app, no prompt |
+
 ## Base system and stages
 
 | Stage | Where it runs | Base | Agent lives in |
@@ -67,10 +92,12 @@ Stage 0 needs no AOSP build, so anyone with a laptop can try it. Stages 1 and 2 
 ## Roadmap
 
 - [ ] **Stage 0: emulator**
-  - [ ] Privileged Anima service: input injection, background virtual display, screen and UI-tree capture
+  - [x] Platform-signed Anima service: trusted agent display with its own focus, input injection, frame and UI-tree capture
+  - [x] Shell UI: live agent display you can touch to take over, activity log, task input, Stop
+  - [x] Silent install of a generated app as an ordinary package
+  - [x] Confirmation policy below the API (keyword and agent-flagged steps)
   - [ ] Host-side agent loop with a cloud model completing a multi-app task
-  - [ ] Silent install of an agent-generated app
-  - [ ] Action log and confirmation for sensitive actions
+  - [ ] Episode recording
 - [ ] **Stage 1: AOSP / Cuttlefish**
   - [ ] Anima service inside `system_server`
   - [ ] OS-internal observation: window/task state, SurfaceFlinger frame data, scheduler and binder traces
