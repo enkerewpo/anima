@@ -100,7 +100,7 @@ Plain HTTP on the device's localhost (`adb forward tcp:7878 tcp:7878`). See [`Ap
 |---|---|---|---|
 | 0 | Android Emulator (arm64, macOS or Linux) | stock AOSP image, API 35 | privileged system app in `/system/priv-app` |
 | 1 | Cuttlefish (Linux x86_64) | LineageOS or AOSP built from source, our forks per [`UPSTREAM.md`](UPSTREAM.md) | `system_server` service plus native hooks |
-| 2 | Real phones (Google Pixel 8 / 8 Pro first) | LineageOS, our forks per [`UPSTREAM.md`](UPSTREAM.md), signed with our own keys | same as Stage 1, plus on-device models |
+| 2 | Real phones (Google Pixel 8a first) | LineageOS, our forks per [`UPSTREAM.md`](UPSTREAM.md), signed with our own keys | same as Stage 1, plus on-device models |
 
 Stage 0 needs no AOSP build, so anyone with a laptop can try it. Stages 1 and 2 are where the OS-level changes live.
 
