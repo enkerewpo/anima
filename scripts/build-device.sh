@@ -12,12 +12,12 @@ OUT="$ROOT/build/device"
 "$ROOT/scripts/fetch-test-keys.sh"
 
 rm -rf "$OUT" && mkdir -p "$OUT/classes" "$OUT/gen" "$OUT/dex"
-"$BT/aapt2" compile --dir "$ROOT/device/res" -o "$OUT/res.zip"
-"$BT/aapt2" link -I "$JAR" --manifest "$ROOT/device/AndroidManifest.xml" \
+"$BT/aapt2" compile --dir "$ROOT/vendor/anima/Anima/res" -o "$OUT/res.zip"
+"$BT/aapt2" link -I "$JAR" --manifest "$ROOT/vendor/anima/Anima/AndroidManifest.xml" \
     -o "$OUT/base.apk" "$OUT/res.zip" --java "$OUT/gen" --auto-add-overlay
 
 javac -nowarn -Xlint:-options --release 8 -classpath "$JAR" -encoding UTF-8 \
-    -d "$OUT/classes" $(find "$ROOT/device/src" "$OUT/gen" -name '*.java')
+    -d "$OUT/classes" $(find "$ROOT/vendor/anima/Anima/src" "$OUT/gen" -name '*.java')
 "$BT/d8" --min-api 30 --lib "$JAR" --output "$OUT/dex" $(find "$OUT/classes" -name '*.class')
 
 cp "$OUT/base.apk" "$OUT/unsigned.apk"

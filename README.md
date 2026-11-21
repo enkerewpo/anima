@@ -22,7 +22,7 @@ Anima is that testbed: an open, modifiable OS in which the agent is a first-clas
 
 1. **Observation.** What can an agent gain from OS-internal signals (window and task state, input dispatch, SurfaceFlinger frame and layer data, binder traffic, scheduler traces) compared with screenshots and accessibility trees? Does it make grounding faster, cheaper or more reliable?
 2. **Actuation.** What is the right action interface: injected input on a background virtual display, structured calls (intents, AppFunctions), or new system calls designed for agents? When should the system pick which?
-3. **Interaction.** If the agent works on its own display while the user keeps the phone, how should the user watch, interrupt, take over and approve? What does a phone look like when the agent, not the launcher, is the main entry point?
+3. **Interaction.** If the agent works on its own display while the user keeps the phone, how should the user watch, interrupt, take over and approve? What does a phone look like when the agent, not a grid of app icons, is the home screen, and natural language (typed or spoken) is the main way in, with apps still there underneath?
 4. **Security.** Who constrains an agent that holds system privileges? How do we contain prompt injection from screen content, confirm irreversible actions, audit everything, and respect apps that do not want to be automated?
 5. **Generated software.** Can the agent write, sign, install and update its own native apps as first-class packages, and how should the OS manage their lifecycle and permissions?
 
@@ -54,6 +54,20 @@ The design is layered so that each piece can be replaced in an experiment.
 - **Policy & audit** sits below the API. Every action is logged; sensitive and irreversible actions need user confirmation; apps can be excluded.
 - **Episodes** (observations, actions, system traces) are recorded for replay and evaluation.
 
+## Repository layout
+
+This repository holds **only Anima's own code**. Upstream projects are never copied in; what we use, at which version, and what we change is listed in [`UPSTREAM.md`](UPSTREAM.md).
+
+```
+vendor/anima/          on-device code, laid out as it will sit in an AOSP/LineageOS tree (vendor/anima)
+  Anima/               the Anima system service, agent display, policy, API server and shell UI
+host/                  reference agent and app generator that run on a computer
+scripts/               build and run helpers
+UPSTREAM.md            upstream components, pinned versions, our forks and the rules for them
+```
+
+From Stage 1, the OS changes that cannot live in `vendor/anima` go into separate fork repositories of the upstream projects (for example `frameworks/base`), each a clean stack of `[anima]` commits on a pinned upstream revision.
+
 ## Quick start (Stage 0)
 
 Needs the Android SDK (emulator, platform-tools, build-tools 35, platform 35), JDK 17 and Python 3. No AOSP checkout.
@@ -68,7 +82,7 @@ How Stage 0 gets system privileges without building AOSP: stock emulator images 
 
 ### The Anima API
 
-Plain HTTP on the device's localhost (`adb forward tcp:7878 tcp:7878`). See [`ApiServer.java`](device/src/dev/anima/ApiServer.java).
+Plain HTTP on the device's localhost (`adb forward tcp:7878 tcp:7878`). See [`ApiServer.java`](vendor/anima/Anima/src/dev/anima/ApiServer.java).
 
 | Call | What it does |
 |---|---|
@@ -84,8 +98,8 @@ Plain HTTP on the device's localhost (`adb forward tcp:7878 tcp:7878`). See [`Ap
 | Stage | Where it runs | Base | Agent lives in |
 |---|---|---|---|
 | 0 | Android Emulator (arm64, macOS or Linux) | stock AOSP image, API 35 | privileged system app in `/system/priv-app` |
-| 1 | Cuttlefish (Linux x86_64) | AOSP built from source | `system_server` service plus native hooks |
-| 2 | Real phones (Google Pixel) | LineageOS / AOSP, signed with our own keys | same as Stage 1, plus on-device models |
+| 1 | Cuttlefish (Linux x86_64) | LineageOS or AOSP built from source, our forks per [`UPSTREAM.md`](UPSTREAM.md) | `system_server` service plus native hooks |
+| 2 | Real phones (Google Pixel 8 / 8 Pro first) | LineageOS, our forks per [`UPSTREAM.md`](UPSTREAM.md), signed with our own keys | same as Stage 1, plus on-device models |
 
 Stage 0 needs no AOSP build, so anyone with a laptop can try it. Stages 1 and 2 are where the OS-level changes live.
 
@@ -98,6 +112,7 @@ Stage 0 needs no AOSP build, so anyone with a laptop can try it. Stages 1 and 2 
   - [x] Confirmation policy below the API (keyword and agent-flagged steps)
   - [ ] Host-side agent loop with a cloud model completing a multi-app task
   - [ ] Episode recording
+  - [ ] Agent-centred home: the shell as the HOME app and the assistant (voice) entry, apps one level down
 - [ ] **Stage 1: AOSP / Cuttlefish**
   - [ ] Anima service inside `system_server`
   - [ ] OS-internal observation: window/task state, SurfaceFlinger frame data, scheduler and binder traces
